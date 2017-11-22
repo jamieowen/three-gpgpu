@@ -1,5 +1,5 @@
 
-import aBigTriangle from '../geometry/aBigTriangle';
+// import aBigTriangle from '../geometry/aBigTriangle';
 import State from './State'
 
 import {
@@ -60,7 +60,7 @@ const defaultOpts = {
 
 }
 
-export default class GPGPUSimulate{
+export default class Simulate{
 
     constructor( opts ){
 

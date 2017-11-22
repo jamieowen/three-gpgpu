@@ -16,7 +16,7 @@ import {
 	BackSide
 } from 'three';
 
-import aBigTriangle from '../geometry/aBigTriangle';
+// import aBigTriangle from '../geometry/aBigTriangle';
 
 const defaultOpts = {
 

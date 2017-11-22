@@ -10,5 +10,18 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jamie Owen <hello@jamieowen.com> (=)",
-  "license": "ISC"
+  "license": "ISC",
+  "babel": {
+    "plugins": [],
+    "presets": [
+      "es2015"
+    ]
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify"
+      ]
+    ]
+  }
 }

@@ -9,6 +9,10 @@ export default class Example{
 
     constructor(){
 
+        window.onload = ()=>{
+            this.init();
+        }
+
     }
 
     init(){
@@ -17,13 +21,32 @@ export default class Example{
             antialias: true
         });
 
+        const style = document.createElement( 'style' );
+        style.innerText = `
+            body{
+                margin: 0px;
+                padding: 0px;
+                overflow: hidden;
+            }
+        `;
+        
+        document.body.appendChild( style );
+        document.body.appendChild( this.renderer.domElement );
+
         this.camera = new PerspectiveCamera( 35,4/3,0.1,1000 );
+        this.camera.position.z = 100;
+
         this.scene = new Scene();  
         
         this.setup();
 
+        this.resize = this.resize.bind(this);
         this.render = this.render.bind(this);
-        this.render();
+
+        this.resize();
+        this.render();           
+        
+        window.addEventListener( 'resize', this.resize );
 
     }
 
@@ -41,8 +64,7 @@ export default class Example{
     }
 
     update(){
-
-
+        
     }
 
     resize(){
@@ -55,7 +77,5 @@ export default class Example{
         this.renderer.setSize( w,h );
 
     }
-
-
 
 }
