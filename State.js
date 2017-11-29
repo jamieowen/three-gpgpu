@@ -2,7 +2,6 @@
 import {
 	Mesh,
 	Scene,
-	Camera,
 	PerspectiveCamera,
 	PlaneBufferGeometry,
 	OrthographicCamera,
@@ -11,34 +10,45 @@ import {
 	NearestFilter,
 	DefaultMapping,
 	FloatType,
-	RGBAFormat,
+	RGBFormat,
 	RawShaderMaterial,
-	BackSide
+	BackSide,
+	FrontSide,
+	DataTexture,
+	Vector4
 } from 'three';
 
-// import aBigTriangle from '../geometry/aBigTriangle';
+import Geometry from './lib/Geometry';
+import Shaders from './lib/Shaders';
+
+const defaultRttOpts = {
+	format: RGBFormat,
+	type:FloatType,
+	mapping: DefaultMapping,
+	wrapS: ClampToEdgeWrapping,
+	wrapT: ClampToEdgeWrapping,
+	minFilter: NearestFilter,
+	magFilter: NearestFilter,
+	stencilBuffer: false,
+	depthBuffer: false
+} 
 
 const defaultOpts = {
 
 	width: 256,
 	height: 256,
 
-	uniforms: {},
-	fragmentShader: ``,
-
+	uniforms: {
+		previousState: { type: 't', value: null }
+	},
+	
+	updateShader: Shaders.defaultUpdateStateFragment,
+	
+	initialState: null, // Provide a function to generate data.
+	initialData: null, // Or, provide a DataTexture directly.
 	states: 2,
-	fillMode: 'square',
-	rttOpts: {
-		stencilBuffer: false,
-		depthBuffer: false,
-		format: RGBAFormat,
-		type:FloatType,
-		mapping: DefaultMapping,
-		wrapS: ClampToEdgeWrapping,
-		wrapT: ClampToEdgeWrapping,
-		minFilter: NearestFilter,
-		magFilter: NearestFilter
-	}
+	renderMode: 'triangle',
+	rttOpts: defaultRttOpts
 
 };
 
@@ -46,12 +56,14 @@ const defaultOpts = {
 export default class State{
 
 	constructor( opts ){
-
+		
+		const uniforms = Object.assign( {}, defaultOpts.uniforms, opts.uniforms );		
 		opts = Object.assign( {}, defaultOpts, opts );
-
+		opts.uniforms = uniforms;
+		
 		this.opts = opts;
 		this.opts.rttOpts = Object.assign( {}, defaultOpts.rttOpts, opts.rttOpts );
-
+		
 		this._current = 0;
 		this._previous = opts.states-1;
 
@@ -65,66 +77,78 @@ export default class State{
 				new WebGLRenderTarget( opts.width,opts.height,opts.rttOpts )
 			)
 		}
+		
+		this.camera = new OrthographicCamera( -0.5,0.5,0.5,-0.5,0,1 );			
+		
+		this.geometry = opts.renderMode === 'triangle' ? 
+			Geometry.createTriangleGeometry() : Geometry.createPlaneGeometry();
+			
+		this.material = new RawShaderMaterial( {
 
-		switch( opts.fillMode ){
+			uniforms: opts.uniforms,
+			vertexShader: opts.renderMode === 'triangle' ? 
+				Shaders.triangleVertexShader : Shaders.quadVertexShader,
+			fragmentShader: opts.updateShader,
+			depthTest: false,
+			depthWrite: false,
+			side: opts.renderMode === 'triangle' ? BackSide : FrontSide
 
-			case 'square':
-
-				this.camera = new OrthographicCamera( -0.5,0.5,0.5,-0.5,0,1 );
-				this.geometry = new PlaneBufferGeometry( 1,1 );
-				this.material = new RawShaderMaterial( {
-
-					uniforms: opts.uniforms,
-					vertexShader: `
-						uniform mat4 projectionMatrix;
-		                uniform mat4 modelViewMatrix;
-		                attribute vec3 position;
-		                attribute vec2 uv;
-
-		                varying vec2 vUv;
-
-		                void main(){
-
-		                    vUv = uv;
-		                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
-		                }
-					`,
-					fragmentShader: opts.fragmentShader,
-					depthTest: false,
-					depthWrite: false
-
-				});
-
-				break;
-
-			case 'triangle':
-
-				// doesn't seem to working at the mo :(
-				// didn't have this problem before..
-				// NOTE : problems with UV's not extending to full range.
-
-				this.camera = new Camera();
-				this.geometry = aBigTriangle.getGeometry();
-				this.material = new RawShaderMaterial( {
-
-					uniforms: opts.uniforms,
-					vertexShader: aBigTriangle.getVertexShader(),
-					fragmentShader: opts.fragmentShader,
-					depthTest: false,
-					depthWrite: false,
-					side: BackSide
-
-				});
-
-				break;
-
-		}
+		});
 
 		this.mesh = new Mesh( this.geometry,this.material );
 		this.scene = new Scene();
 		this.scene.add( this.mesh );
+			
+		// Create or assign the initial data texture.
+		if( opts.initialData ){
+			this.initialData = opts.initialData;
+		}else{
+			let data = new Float32Array( this.width * this.height * 3 );
+			let rttOpts = this.opts.rttOpts;
+			// format, type, mapping, wrapS, wrapT, magFilter, minFilter, anisotropy, encoding
+			this.initialData = new DataTexture( 
+				data, this.width, this.height,
+				rttOpts.format, rttOpts.type, rttOpts.mapping,
+				rttOpts.wrapS, rttOpts.wrapT,
+				rttOpts.magFilter, rttOpts.minFilter 
+			 );
+		}
+		
+		this.writeInitialState = true;
+		
+		// Populate the data texture with initial state.
+		if( opts.initialState ){
+			this.setInitialState( opts.initialState );
+		}
 
+	}
+	
+	setInitialState( setValueFunc ){
+		
+		const vec4 = new Vector4();
+		let offset3 = 0;
+		let i = 0;
+		const data = this.initialData.image.data;
+		
+		for( let y = 0; y<this.height; y++ ){
+			
+			for( let x = 0; x<this.width; x++ ){
+				
+				setValueFunc( vec4, i,x,y );
+				
+				data[ offset3 ] = vec4.x;
+				data[ offset3 + 1 ] = vec4.y;
+				data[ offset3 + 2 ] = vec4.z;
+								
+				i++;
+				offset3+=3;
+				
+			}
+			
+		} 
+		
+		this.initialData.needsUpdate = true;		
+		
 	}
 
 	getTexture(){
@@ -160,17 +184,24 @@ export default class State{
 	}
 
 	render( renderer ){
-
-		var next = this._step();
-		renderer.render( this.scene, this.camera, next, true );
+		
+		let next;
+		this.writeInitialState = false;
+		if( this.writeInitialState ){
+			next = this.initialData;
+			
+		}else{
+			next = this._step();	
+		}
+		
+		this.material.uniforms.previousState.value = this.initialData;
+		
+		renderer.clearTarget( next, true, true, false );
+		renderer.render( this.scene, this.camera, next, false );
 		renderer.setRenderTarget( null );
 
 	}
 
-	/**
-	 * This was added for the Surface renderer.
-	 * But may be this can be removed now.
-	 */
 	scissorRender( renderer, x,y, width, height ){
 
 		var next = this._step();
@@ -191,26 +222,4 @@ export default class State{
 
 	}
 
-	/**
-	pass(){
-
-		//this.mesh.material = material
-
-	}
-
-	out(){
-
-	}**/
-
 }
-
-
-//GPGPU.triangleGeometry = getTriangle();
-//GPGPU.squareGeometry = getSquare();
-/**GPGPU.vertexShader = triangleVertexShader;
-GPGPU.triangleVertexShader = triangleVertexShader;
-GPGPU.squareVertexShader = squareVertexShader;
-
-GPGPU.getTriangleGeometry = getTriangle;
-GPGPU.getSquareGeometry = getSquare;
-**/

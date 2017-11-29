@@ -7,14 +7,15 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "simulate": "budo examples/SimulateExample.js --open --live",
+    "state": "budo examples/StateExample.js --open --live"
   },
   "author": "Jamie Owen <hello@jamieowen.com> (=)",
   "license": "ISC",
   "babel": {
     "plugins": [],
     "presets": [
-      "es2015"
+      "env"
     ]
   },
   "browserify": {
@@ -23,5 +24,14 @@
         "babelify"
       ]
     ]
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babelify": "^8.0.0",
+    "budo": "^10.0.4"
+  },
+  "peerDependencies": {
+    "three": "^0.87.1"
   }
 }

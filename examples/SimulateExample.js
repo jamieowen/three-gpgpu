@@ -1,16 +1,14 @@
 
-import Example from './Example';
+import ExampleBase from './ExampleBase';
 import {
     Mesh,
     MeshBasicMaterial,
-    BoxBufferGeometry,
-    RGBAFormat,
-    RGBFormat    
+    BoxBufferGeometry  
 } from 'three';
 
-import Simulate from '../../Simulate';
+import Simulate from '../Simulate';
 
-class BasicExample extends Example{
+class BasicExample extends ExampleBase{
 
     constructor(){
 
@@ -29,12 +27,12 @@ class BasicExample extends Example{
         this.scene.add( mesh );
 
         this.simulate = new Simulate({
-            maxTextureSize: 256,
-            numObjects: 256 * 256,
-            textureFormat: RGBFormat,
+            textureWidth: 256,
+            numObjects: 1000,
             attributes: [
                 {
                     name: 'position',
+                    size: 3,
                     initialState: ( vec,i )=>{
 
                         vec.x = -10.0;
@@ -45,11 +43,12 @@ class BasicExample extends Example{
                 },
                 {
                     name: 'color',
+                    size: 3,
                     initialState: ( vec, i )=>{
 
                         vec.x = 1.0;
                         vec.y = 0.0;
-                        vec.z = 0.0;
+                        vec.z = 1.0;
 
                     }
                 }
@@ -65,9 +64,10 @@ class BasicExample extends Example{
             shader: {
 
                 functions: `
-                vec3 getForce( vec3 position ){
+                vec3 accumulateModel( vec3 position ){
 
-                    return 
+                    return vec3( 0.0,1.0,0.0 );
+                    
                 }
                 `,
                 update: `
@@ -79,7 +79,7 @@ class BasicExample extends Example{
                     float life = state.props.x;
                     float age = state.props.y;
 
-                    vec3 force = getForce( position );
+                    vec3 force = accumulateModel( position );
 
                     state.position += force;
                     state.color *= life / age;
