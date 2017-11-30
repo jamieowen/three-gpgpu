@@ -39,7 +39,8 @@ const defaultOpts = {
 	height: 256,
 
 	uniforms: {
-		previousState: { type: 't', value: null }
+		previousState: { type: 't', value: null },
+		textureSize: { value: new Vector4() }
 	},
 	
 	updateShader: Shaders.defaultUpdateStateFragment,
@@ -47,7 +48,7 @@ const defaultOpts = {
 	initialState: null, // Provide a function to generate data.
 	initialData: null, // Or, provide a DataTexture directly.
 	states: 2,
-	renderMode: 'triangle',
+	renderMode: 'triangle', // triangle or quad.
 	rttOpts: defaultRttOpts
 
 };
@@ -59,7 +60,7 @@ export default class State{
 		
 		const uniforms = Object.assign( {}, defaultOpts.uniforms, opts.uniforms );		
 		opts = Object.assign( {}, defaultOpts, opts );
-		opts.uniforms = uniforms;
+		opts.uniforms = uniforms;	
 		
 		this.opts = opts;
 		this.opts.rttOpts = Object.assign( {}, defaultOpts.rttOpts, opts.rttOpts );
@@ -83,6 +84,13 @@ export default class State{
 		this.geometry = opts.renderMode === 'triangle' ? 
 			Geometry.createTriangleGeometry() : Geometry.createPlaneGeometry();
 			
+		if( opts.uniforms.previousState === defaultOpts.uniforms.previousState ){
+			opts.uniforms.previousState = { type: 't', value: null };
+		}
+		if( opts.uniforms.textureSize === defaultOpts.uniforms.textureSize ){
+			opts.uniforms.textureSize = { value: new Vector4( this.width, this.height, 1/this.width, 1/this.height ) };
+		}		
+					
 		this.material = new RawShaderMaterial( {
 
 			uniforms: opts.uniforms,
@@ -94,6 +102,9 @@ export default class State{
 			side: opts.renderMode === 'triangle' ? BackSide : FrontSide
 
 		});
+		
+		this.resetMaterial = this.material.clone();
+		this.resetMaterial.fragmentShader = Shaders.defaultUpdateStateFragment;
 
 		this.mesh = new Mesh( this.geometry,this.material );
 		this.scene = new Scene();
@@ -114,7 +125,8 @@ export default class State{
 			 );
 		}
 		
-		this.writeInitialState = true;
+		this.readInitialState = true;
+		this.readStateCount = 1; // the number of state textures to read/write to.
 		
 		// Populate the data texture with initial state.
 		if( opts.initialState ){
@@ -148,6 +160,15 @@ export default class State{
 		} 
 		
 		this.initialData.needsUpdate = true;		
+		
+	}
+	
+	reset( count=null ){
+		
+		if( !count ){
+			this.readStateCount = this.states.length;
+		}
+		this.readInitialState = true;
 		
 	}
 
@@ -185,21 +206,42 @@ export default class State{
 
 	render( renderer ){
 		
-		let next;
-		this.writeInitialState = false;
-		if( this.writeInitialState ){
-			next = this.initialData;
+		let next,prev;
+		
+		if( this.readInitialState ){
+			
+			this.mesh.material = this.resetMaterial;
+			prev = this.initialData;
+			
+			for( let i = 0; i<this.readStateCount; i++ ){
+				next = this._step();
+				this._write( renderer, prev, next, false );
+			}
+			
+			this.mesh.material = this.material;
+			this.readInitialState = false;
 			
 		}else{
-			next = this._step();	
+			
+			next = this._step();
+			prev = this.getPrevious();
+			this._write( renderer, prev, next, true );
+					
+		}	
+		
+	}
+	
+	_write( renderer, previous, next, clear=true ){
+		
+		this.mesh.material.uniforms.previousState.value = previous;
+		
+		if( clear ){
+			renderer.clearTarget( next, true, true, false );
 		}
 		
-		this.material.uniforms.previousState.value = this.initialData;
-		
-		renderer.clearTarget( next, true, true, false );
 		renderer.render( this.scene, this.camera, next, false );
 		renderer.setRenderTarget( null );
-
+		
 	}
 
 	scissorRender( renderer, x,y, width, height ){
