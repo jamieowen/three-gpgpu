@@ -18,8 +18,6 @@ class StateExample extends ExampleBase{
     
     setup(){
         
-
-        
         this.state1 = new State({
             renderMode: 'triangle',
             uniforms: {
@@ -42,10 +40,21 @@ class StateExample extends ExampleBase{
                 
                 varying vec2 vUv;
                 
+                highp float rand(vec2 co)
+                {
+                    highp float a = 12.9898;
+                    highp float b = 78.233;
+                    highp float c = 43758.5453;
+                    highp float dt= dot(co.xy ,vec2(a,b));
+                    highp float sn= mod(dt,3.14);
+                    return fract(sin(sn) * c);
+                }
+                
                 void main(){
                                     
                     vec4 prev = texture2D( previousState,vUv );
-                    gl_FragColor = vec4( prev.xyz * 0.998, 1.0 );
+                    float r = 1.0  - ( rand( vUv ) * 0.02 );                    
+                    gl_FragColor = vec4( prev.xyz * 0.98 * r, 1.0 );
                     
                 } 
                            
@@ -99,6 +108,7 @@ class StateExample extends ExampleBase{
             </style>
             <section>
                 <button id="resetButton">Reset Initial State</button>
+                <button id="regenButton">Regenerate Initial Data</button>
             </section>
         `;        
         document.body.appendChild( ui );
@@ -108,6 +118,15 @@ class StateExample extends ExampleBase{
             this.state2.reset();
             
         }
+        
+        document.getElementById( 'regenButton' ).onclick = ()=>{
+            
+            this.state1.setInitialState( this.state1.opts.initialState );
+            this.state2.setInitialState( this.state2.opts.initialState );
+            this.state1.reset();
+            this.state2.reset();
+            
+        }        
                 
     }
 
