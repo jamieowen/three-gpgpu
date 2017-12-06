@@ -21,7 +21,6 @@ class StateExample extends ExampleBase{
         this.state1 = new State({
             renderMode: 'triangle',
             uniforms: {
-                decay: { value: 0.3 }
             },
             initialState: ( vec, i,x,y )=>{
                 
@@ -36,7 +35,8 @@ class StateExample extends ExampleBase{
                 precision mediump float;
                 
                 uniform sampler2D previousState;
-                uniform vec4 textureSize;
+                uniform vec2 textureSize;
+                uniform vec4 texelSize;
                 
                 varying vec2 vUv;
                 
@@ -64,7 +64,6 @@ class StateExample extends ExampleBase{
         this.state2 = new State({
             renderMode: 'quad',
             uniforms: {
-                decay: { value: 0.3 }
             },            
             initialState: ( vec, i,x,y )=>{
                 

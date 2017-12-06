@@ -15,6 +15,7 @@ import {
 	BackSide,
 	FrontSide,
 	DataTexture,
+	Vector2,
 	Vector4
 } from 'three';
 
@@ -40,7 +41,8 @@ const defaultOpts = {
 
 	uniforms: {
 		previousState: { type: 't', value: null },
-		textureSize: { value: new Vector4() }
+		textureSize: { value: new Vector2() },
+		texelSize: { value: new Vector4() }
 	},
 	
 	updateShader: Shaders.defaultUpdateStateFragment,
@@ -60,7 +62,7 @@ export default class State{
 		
 		const uniforms = Object.assign( {}, defaultOpts.uniforms, opts.uniforms );		
 		opts = Object.assign( {}, defaultOpts, opts );
-		opts.uniforms = uniforms;	
+		opts.uniforms = uniforms;
 		
 		this.opts = opts;
 		this.opts.rttOpts = Object.assign( {}, defaultOpts.rttOpts, opts.rttOpts );
@@ -89,6 +91,9 @@ export default class State{
 		}
 		if( opts.uniforms.textureSize === defaultOpts.uniforms.textureSize ){
 			opts.uniforms.textureSize = { value: new Vector4( this.width, this.height, 1/this.width, 1/this.height ) };
+		}		
+		if( opts.uniforms.texelSize === defaultOpts.uniforms.texelSize ){
+			opts.uniforms.texelSize = { value: new Vector4( 1/this.width, 1/this.height, (1/this.width)*0.5, (1/this.height)*0.5 ) };
 		}		
 					
 		this.material = new RawShaderMaterial( {
@@ -159,7 +164,7 @@ export default class State{
 			
 		} 
 		
-		this.initialData.needsUpdate = true;		
+		this.initialData.needsUpdate = true;
 		
 	}
 	
@@ -211,7 +216,9 @@ export default class State{
 		if( this.readInitialState ){
 			
 			this.mesh.material = this.resetMaterial;
+
 			prev = this.initialData;
+			console.log( '__Read Initial State :' );
 			
 			for( let i = 0; i<this.readStateCount; i++ ){
 				next = this._step();

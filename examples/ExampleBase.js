@@ -131,9 +131,15 @@ export default class Example{
             
             preview.position.x = margin;
             preview.position.y = y;
-            
-            preview.scale.x = previewSize;
-            preview.scale.y = previewSize;
+
+            if( preview.userData.size ){
+                preview.scale.x = preview.userData.size[0] * previewSize;
+                preview.scale.y = preview.userData.size[1] * previewSize;
+            }else{
+                preview.scale.x = previewSize;
+                preview.scale.y = previewSize;
+            }
+
             
             y += previewSize + previewSpacing;
             
@@ -141,7 +147,7 @@ export default class Example{
         
     }
     
-    previewTexture( texture ){
+    previewTexture( texture, size=null ){
 
         const mesh = new Mesh( 
             createPreviewGeometry(),
@@ -153,6 +159,7 @@ export default class Example{
             })
         ) 
         
+        mesh.userData.size = size;
         this.orthoScene.add( mesh );
         
         this.layout();
