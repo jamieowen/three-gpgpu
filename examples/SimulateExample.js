@@ -119,7 +119,7 @@ class SimulateExample extends ExampleBase{
         this.geometry = new BufferGeometry();        
         this.geometry.addAttribute( 'read_uv', new BufferAttribute( readUV,2 ) );
 
-        const temp = new Float32Array( this.simulate.state.width * this.simulate.state.height * 3 );
+        const temp = new Float32Array( this.simulate.numObjects * 3 );
 
         this.geometry.addAttribute( 'position', new BufferAttribute( temp, 3 ) );
 

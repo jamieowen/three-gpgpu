@@ -107,6 +107,12 @@ export default class Simulate{
 
     }
 
+    get numObjects(){
+
+        return this.state.width * ( this.state.height / this.attributes.length );
+        
+    }
+
     createGeometry(){
 
         

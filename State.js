@@ -218,7 +218,6 @@ export default class State{
 			this.mesh.material = this.resetMaterial;
 
 			prev = this.initialData;
-			console.log( '__Read Initial State :' );
 			
 			for( let i = 0; i<this.readStateCount; i++ ){
 				next = this._step();
