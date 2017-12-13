@@ -55,6 +55,7 @@ class SimulateExample extends ExampleBase{
                     size: 3,
                     initialState: ( vec, i )=>{
                         
+                        // color
                         vec.x = Math.random();
                         vec.y = 0.0;
                         vec.z = Math.random();
@@ -96,6 +97,10 @@ class SimulateExample extends ExampleBase{
 
                     sim.velocity.y += cos( time * sim.props.z ) * sim.props.y;
                     sim.velocity.xz = vec2( cos( time ) );
+
+                    sim.color.r = sin( time * sim.props.z );
+                    sim.color.g = sin( time * sim.props.z ) * sim.props.y;
+                    sim.color.b = sin( time ) + sim.props.z;
                     
                     float max = sim.props.x;
                     sim.velocity.y = clamp( sim.velocity.y, -max, max );
@@ -144,9 +149,9 @@ class SimulateExample extends ExampleBase{
 
                     void main(){
 
-                        vec2 read_position = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_position )+ texelSize.zw;
-                        vec2 read_color = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_color ) + texelSize.zw;
-                        vec2 read_velocity = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_velocity ) + texelSize.zw;
+                        vec2 read_position = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_position );//+ texelSize.zw;
+                        vec2 read_color = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_color );// + texelSize.zw;
+                        vec2 read_velocity = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_velocity );// + texelSize.zw;
 
                         vec3 position = texture2D( state, read_position ).rgb;
                         vec3 color = texture2D( state, read_color ).rgb;

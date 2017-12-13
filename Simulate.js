@@ -74,12 +74,11 @@ export default class Simulate{
         const updateShader = Shaders.createSimulateUpdateWrapper( 
             this.attributes, opts.updateShader );
 
-        console.log( 'Shader:', updateShader );
+        // console.log( 'Shader:', updateShader );
 
         const segmentY = opts.height / this.attributes.length;
 
         this.clock = new Clock();
-        console.log( this.clock );
 
         this.state = new State( {
 
