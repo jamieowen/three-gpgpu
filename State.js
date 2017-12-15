@@ -11,6 +11,7 @@ import {
 	DefaultMapping,
 	FloatType,
 	RGBFormat,
+	RGBAFormat,
 	RawShaderMaterial,
 	BackSide,
 	FrontSide,
@@ -23,7 +24,7 @@ import Geometry from './lib/Geometry';
 import Shaders from './lib/Shaders';
 
 const defaultRttOpts = {
-	format: RGBFormat,
+	format: RGBAFormat,
 	type:FloatType,
 	mapping: DefaultMapping,
 	wrapS: ClampToEdgeWrapping,
@@ -119,7 +120,7 @@ export default class State{
 		if( opts.initialData ){
 			this.initialData = opts.initialData;
 		}else{
-			let data = new Float32Array( this.width * this.height * 3 );
+			let data = new Float32Array( this.width * this.height * 4 );
 			let rttOpts = this.opts.rttOpts;
 			// format, type, mapping, wrapS, wrapT, magFilter, minFilter, anisotropy, encoding
 			this.initialData = new DataTexture( 
@@ -143,7 +144,7 @@ export default class State{
 	setInitialState( setValueFunc ){
 		
 		const vec4 = new Vector4();
-		let offset3 = 0;
+		let offset4 = 0;
 		let i = 0;
 		const data = this.initialData.image.data;
 		
@@ -153,12 +154,13 @@ export default class State{
 				
 				setValueFunc( vec4, i,x,y );
 				
-				data[ offset3 ] = vec4.x;
-				data[ offset3 + 1 ] = vec4.y;
-				data[ offset3 + 2 ] = vec4.z;
+				data[ offset4 ] = vec4.x;
+				data[ offset4 + 1 ] = vec4.y;
+				data[ offset4 + 2 ] = vec4.z;
+				data[ offset4 + 3 ] = vec4.w;
 								
 				i++;
-				offset3+=3;
+				offset4+=4;
 				
 			}
 			

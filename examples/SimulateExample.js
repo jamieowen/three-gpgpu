@@ -35,7 +35,7 @@ class SimulateExample extends ExampleBase{
 
                         vec.x = Math.random() * r - r2;
                         vec.y = Math.random() * r - r2;
-                        vec.z = Math.random() * r - r2;
+                        vec.z = Math.random() * r - r2;                        
 
                     }
                 },
@@ -44,7 +44,7 @@ class SimulateExample extends ExampleBase{
                     size: 3,
                     initialState: ( vec,i )=>{
 
-                        vec.x = ( ( Math.random() * 0.3 ) + 0.1 ) * 1.6;
+                        vec.x = ( ( Math.random() * 0.3 ) + 0.1 ) * 0.3;
                         vec.y = 0.0;
                         vec.z = 0.0;
 
@@ -93,10 +93,10 @@ class SimulateExample extends ExampleBase{
                 Model updateSimulation( Model sim ){
 
                     sim.position.xyz += sim.velocity.xyz;
-                    sim.position.xyz = mod( sim.position.xyz, ${r.toFixed(10)} ) - ${r2.toFixed(10)};
-
-                    sim.velocity.y += cos( time * sim.props.z ) * sim.props.y;
-                    sim.velocity.xz = vec2( cos( time ) );
+                    sim.position.xyz = mod( sim.position.xyz + 20.0, 40.0 ) - 20.0;
+                    
+                    sim.velocity.y += cos( time * sim.props.z ) * sim.props.y * 0.5;
+                    sim.velocity.xz = vec2( cos( time ) ) * 0.5;
 
                     sim.color.r = sin( time * sim.props.z );
                     sim.color.g = sin( time * sim.props.z ) * sim.props.y;
@@ -115,12 +115,13 @@ class SimulateExample extends ExampleBase{
 
         this.previewTexture( this.simulate.state.getCurrent(), [ 1, 4 ] );
         
-        const readUV = this.simulate.createReadUVArray();        
+        const readUV = this.simulate.createReadUVArray2();        
         this.geometry = new BufferGeometry();        
         this.geometry.addAttribute( 'read_uv', new BufferAttribute( readUV,2 ) );
 
+        console.log( 'Num Objects : ', readUV.length / 2, this.simulate.numObjects );
         const temp = new Float32Array( this.simulate.numObjects * 3 );
-
+        
         this.geometry.addAttribute( 'position', new BufferAttribute( temp, 3 ) );
 
         this.points = new Points( this.geometry,
@@ -149,18 +150,18 @@ class SimulateExample extends ExampleBase{
 
                     void main(){
 
-                        vec2 read_position = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_position );//+ texelSize.zw;
-                        vec2 read_color = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_color );// + texelSize.zw;
-                        vec2 read_velocity = vec2( read_uv.x, mod( read_uv.y, v_segment ) + v_velocity );// + texelSize.zw;
+                        vec2 read_position = vec2( read_uv.x, read_uv.y + v_position );
+                        vec2 read_color = vec2( read_uv.x, read_uv.y + v_color );
+                        vec2 read_velocity = vec2( read_uv.x, read_uv.y + v_velocity );
 
                         vec3 position = texture2D( state, read_position ).rgb;
                         vec3 color = texture2D( state, read_color ).rgb;
                         vec3 velocity = texture2D( state, read_velocity ).rgb;
                         
-                        color += length( velocity ) * 0.1;
+                        // color += length( velocity ) * 0.1;
                         vColor = color;
 
-                        gl_PointSize = 2.5;
+                        gl_PointSize = 1.5;
                         gl_Position = projectionMatrix * modelViewMatrix * vec4( position,1.0 );
 
                     }
@@ -190,6 +191,20 @@ class SimulateExample extends ExampleBase{
         this.orthoScene.children[0].material.map = this.simulate.state.getCurrent();
 
         this.points.material.uniforms.state.value = this.simulate.state.getCurrent();
+
+        // if( this.readTest === undefined ){
+        //     this.readTest = true;
+
+        //     const buffer = new Float32Array( this.simulate.state.width * this.simulate.state.height * 4 );
+        //     // console.log( buffer.length / 3 );
+            
+        //     this.renderer.readRenderTargetPixels( 
+        //         this.simulate.state.getRenderTexture(), 
+        //         0,0,this.simulate.state.width, this.simulate.state.height, buffer 
+        //     );
+
+        //     console.log( 'BUFFER', buffer );
+        // }
 
     }
 

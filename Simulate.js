@@ -110,7 +110,7 @@ export default class Simulate{
     get numObjects(){
 
         return this.state.width * ( this.state.height / this.attributes.length );
-        
+
     }
 
     createGeometry(){
@@ -144,5 +144,33 @@ export default class Simulate{
         return array;
 
     }
+
+    createReadUVArray2(){
+        
+        const count = this.numObjects;
+        const array = new Float32Array( count * 2 );
+
+        const texX = 1.0 / this.state.width;
+        const texY = 1.0 / this.state.height;
+
+        let u,v;
+        let offset = 0;
+
+        for( let i = 0; i<count; i++ ){
+
+            u = i % this.state.width;
+            v = Math.floor( i / this.state.width );
+
+            array[ offset ] = u * texX;
+            array[ offset + 1 ] = v * texY;
+
+            offset+=2;
+
+        }
+
+        return array;
+
+    }
+            
 
 }

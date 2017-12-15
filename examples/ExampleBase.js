@@ -38,7 +38,8 @@ export default class Example{
     init(){
 
         this.renderer = new WebGLRenderer({
-            antialias: true
+            antialias: true,
+            premultipliedAlpha : false
         });
         
         this.renderer.autoClear = false;
